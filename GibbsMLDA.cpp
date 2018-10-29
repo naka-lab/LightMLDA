@@ -476,15 +476,16 @@ double CGibbsMLDA::Update( bool fixed )
 
 int CGibbsMLDA::SamplingMH(int d, int m, int l, bool fixed)
 {
-	int oldTopic = m_documents_dm[d][m].z_l[l];
-	int w = m_documents_dm[d][m].wordID_l[l];
-	double *P_z = m_P_z;						// バッファ
+	Document doc = m_documents_dm[d][m];
+	int oldTopic = doc.z_l[l];
+	int w = doc.wordID_l[l];
 	double beta = m_beta_m[m];
 	double WxBeta = m_dataDim[m] * beta;
 
 
 	// 単語の提案分布からサンプリング
 	int s = oldTopic;
+	
 	int t = m_aliasTables_mw[m][w].sample();
 
 	if (t!=s)
@@ -498,8 +499,8 @@ int CGibbsMLDA::SamplingMH(int d, int m, int l, bool fixed)
 		// 負の添え字がついた項
 		double nsd_alpha_ = m_N_dz[d][s] + m_alpha;
 		double ntd_alpha_ = m_N_dz[d][t] + m_alpha;
-		double nsw_beta_ = m_N_mwz[m][w][s] + m_beta_m[m];
-		double ntw_beta_ = m_N_mwz[m][w][t] + m_beta_m[m];
+		double nsw_beta_ = m_N_mwz[m][w][s] + beta;
+		double ntw_beta_ = m_N_mwz[m][w][t] + beta;
 		double ns_wbeta_ = m_N_z[s] + WxBeta;
 		double nt_wbeta_ = m_N_z[t] + WxBeta;
 
@@ -508,8 +509,6 @@ int CGibbsMLDA::SamplingMH(int d, int m, int l, bool fixed)
 		double ntw_beta = ntw_beta_;
 		double ns_wbeta = ns_wbeta_;
 		double nt_wbeta = nt_wbeta_;
-
-
 
 		if (s == oldTopic)
 		{
@@ -525,43 +524,72 @@ int CGibbsMLDA::SamplingMH(int d, int m, int l, bool fixed)
 			nt_wbeta_--;
 		}
 
-
 		double pi = (ntd_alpha_ * ntw_beta_ * ns_wbeta_ * nsw_beta * nt_wbeta) / (nsd_alpha_ * nsw_beta_ * nt_wbeta_ * ntw_beta * ns_wbeta);
 
 		// tをaccept or reject
+		/*
 		if (m_rand.GetRandF()<pi)
 		{
 			s = t;
 		}
+		*/
+
+		int m = -(m_rand.GetRandF()<pi);
+		s = (t & m) | (s & ~m);
+
 	}
 
 	// 文書の提案分布からサンプリング
-	int rnd = m_rand.GetRandD() % m_documents_dm[d][m].lenght;
-	t = m_documents_dm[d][m].z_l[rnd];
-
+	double rnd = m_rand.GetRandF() * (doc.lenght + m_alpha*m_numTopic);
+	
+	if( rnd<doc.lenght )
+	{
+		t = doc.z_l[ int(rnd) ];
+	}
+	else
+	{
+		t = m_rand.GetRandD() % m_numTopic;
+	}
 
 	if (t!=s)
 	{
 		// 負の添え字がつく変数
 		double nsd_alpha_ = m_N_dz[d][s] + m_alpha;
 		double ntd_alpha_ = m_N_dz[d][t] + m_alpha;
-		double nsw_beta_ = m_N_mwz[m][w][s] + m_beta_m[m];
-		double ntw_beta_ = m_N_mwz[m][w][t] + m_beta_m[m];
+		double nsw_beta_ = m_N_mwz[m][w][s] + beta;
+		double ntw_beta_ = m_N_mwz[m][w][t] + beta;
 		double ns_wbeta_ = m_N_z[s] + WxBeta;
 		double nt_wbeta_ = m_N_z[t] + WxBeta;
 
 		// 負の添え字がつかない変数
 		double nsd_alpha = nsd_alpha_;
 		double ntd_alpha = ntd_alpha_;
-
+		
+		if( s==oldTopic )
+		{
+			nsd_alpha_ --;
+			nsw_beta_--;
+			ns_wbeta_--;
+		}
+		
+		if( t==oldTopic )
+		{
+			ntd_alpha_--;
+			ntw_beta_--;
+			nt_wbeta_--;
+		}
 
 		double pi = (ntd_alpha_ * ntw_beta_ * ns_wbeta_ * nsd_alpha) / (nsd_alpha_ * nsw_beta_ * nt_wbeta_ * ntd_alpha);
 
 		// tをaccept or reject
+		/*
 		if (m_rand.GetRandF()<pi)
 		{
 			s = t;
 		}
+		*/
+		int m = -(m_rand.GetRandF()<pi);
+		s = (t & m) | (s & ~m);
 	}
 
 	// update

@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #include "AliasTable.h"
 #include "array.h"
-#include <deque>
+
 
 
 CAliasTable::CAliasTable()
@@ -39,15 +39,18 @@ int CAliasTable::sample()
 
 void CAliasTable::BuildTable(double *prob, int len)
 {
-	std::deque<int> large_block;
-	std::deque<int> small_block;
-	m_len = len;
+	m_large_block.clear();
+	m_small_block.clear();
 
 	//double *norm_prob = new double[len];
-	delete[] m_pprobs;
-	delete[] m_palias;
-	m_pprobs = new double[len];
-	m_palias = new int[len];
+	if( m_len!=len )
+	{
+		delete[] m_pprobs;
+		delete[] m_palias;
+		m_pprobs = new double[len];
+		m_palias = new int[len];
+		m_len = len;
+	}
 
 	Normalize( prob, len, len, m_pprobs );
 
@@ -56,23 +59,22 @@ void CAliasTable::BuildTable(double *prob, int len)
 	{
 		if (m_pprobs[i] >= 1.0)
 		{
-			large_block.push_back( i );
+			m_large_block.push_back( i );
 		}
 		else
 		{
-			small_block.push_back( i );
+			m_small_block.push_back( i );
 		}
 	}
 
 	// サイズが1のテーブルを作る
-	while ( large_block.size()!=0 && small_block.size()!=0  )
+	while ( m_large_block.size()!=0 && m_small_block.size()!=0  )
 	{
-		int l = large_block.front();
-		int s = small_block.front();
+		int l = m_large_block.front();
+		int s = m_small_block.front();
 
-
-		large_block.pop_front();
-		small_block.pop_front();
+		m_large_block.pop_front();
+		m_small_block.pop_front();
 
 		// sにlの一部を足して1になるようする
 		m_palias[s] = l;
@@ -80,11 +82,11 @@ void CAliasTable::BuildTable(double *prob, int len)
 
 		if (m_pprobs[l] < 1.0 )
 		{
-			small_block.push_back(l);
+			m_small_block.push_back(l);
 		}
 		else
 		{
-			large_block.push_back(l);
+			m_large_block.push_back(l);
 		}
 	}
 }
