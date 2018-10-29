@@ -120,7 +120,7 @@ std::string MakeConfusionMatrix( std::vector<int> confutionVec, std::vector<int>
 
 void Learn(int numObject, int numModal, int numCategories,
 		   std::string saveDir, int modaldim[],
-		   double **data[], vector<int> correct, int numIter , int numSampling )
+		   double **data[], vector<int> correct, int numIter , int numSampling, SampMethod sm )
 {
 	CGibbsMLDA lda;
 	double maxLik = -DBL_MAX;
@@ -134,10 +134,9 @@ void Learn(int numObject, int numModal, int numCategories,
 	{
 		lda.Initilize( numCategories , numObject , numModal , modaldim );
 		lda.SetData( data );
-		double lik = lda.Learn();
+		double lik = lda.Learn( sm );
 
 		printf("%d回目...lik = %lf\r" , i , lik );
-
 
 		if( lik > maxLik )
 		{
@@ -246,6 +245,8 @@ int main(int argc, char* argv[])
 	int modaldim[10] = {0};
 	int numObj;
 	vector<int> correctCategory;
+	std::string samp_method_str;
+	SampMethod samp_method;
 
 
 	// コマンドライン引数，設定ファイル解析用
@@ -256,6 +257,7 @@ int main(int argc, char* argv[])
 	cp.get_and_assert("num_samiter", numSampling);
 	cp.get_and_assert("num_cat", numCategory);
 	cp.get_and_assert("save_dir", saveDir);
+	cp.get_and_assert("samp_method", samp_method_str);
 
 	printf("カテゴリ数		%d\n" , numCategory );
 	printf("モダリティ数		%d\n" , numModal );
@@ -321,6 +323,24 @@ int main(int argc, char* argv[])
 
 	printf("物体数			%d\n" , numObj );
 
+
+
+	if (samp_method_str == "mh")
+	{
+		samp_method = SampMethod::MH;
+		printf("サンプリング手法	Metropolis-Hastings\n");
+	}
+	else if (samp_method_str == "gibbs")
+	{
+		samp_method = SampMethod::Gibbs;
+		printf("サンプリング手法	Gibbs Sampling\n");
+	}
+	else
+	{
+		printf("未定義のサンプリング手法が指定されました！！\n");
+		return -1;
+	}
+
 	if ( cp.contains("recog") )
 	{
 		//TRY_LODAVAR( loadDir , "LoadModel" , argv[2] );
@@ -331,7 +351,7 @@ int main(int argc, char* argv[])
 	}
 	else if(cp.contains("learn"))
 	{
-		Learn( numObj , numModal , numCategory , saveDir , modaldim , data , correctCategory , numIter , numSampling );
+		Learn( numObj , numModal , numCategory , saveDir , modaldim , data , correctCategory , numIter , numSampling, samp_method );
 	}
 
 	for(int i=0 ; i<10 ; i++ )

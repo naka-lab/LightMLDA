@@ -509,6 +509,8 @@ int CGibbsMLDA::SamplingMH(int d, int m, int l, bool fixed)
 		double ns_wbeta = ns_wbeta_;
 		double nt_wbeta = nt_wbeta_;
 
+
+
 		if (s == oldTopic)
 		{
 			nsd_alpha_--;
@@ -523,6 +525,7 @@ int CGibbsMLDA::SamplingMH(int d, int m, int l, bool fixed)
 			nt_wbeta_--;
 		}
 
+
 		double pi = (ntd_alpha_ * ntw_beta_ * ns_wbeta_ * nsw_beta * nt_wbeta) / (nsd_alpha_ * nsw_beta_ * nt_wbeta_ * ntw_beta * ns_wbeta);
 
 		// tをaccept or reject
@@ -530,14 +533,59 @@ int CGibbsMLDA::SamplingMH(int d, int m, int l, bool fixed)
 		{
 			s = t;
 		}
-
-
 	}
 
+	// 文書の提案分布からサンプリング
+	int rnd = m_rand.GetRandD() % m_documents_dm[d][m].lenght;
+	t = m_documents_dm[d][m].z_l[rnd];
 
 
+	if (t!=s)
+	{
+		// 負の添え字がつく変数
+		double nsd_alpha_ = m_N_dz[d][s] + m_alpha;
+		double ntd_alpha_ = m_N_dz[d][t] + m_alpha;
+		double nsw_beta_ = m_N_mwz[m][w][s] + m_beta_m[m];
+		double ntw_beta_ = m_N_mwz[m][w][t] + m_beta_m[m];
+		double ns_wbeta_ = m_N_z[s] + WxBeta;
+		double nt_wbeta_ = m_N_z[t] + WxBeta;
 
-	return 0;
+		// 負の添え字がつかない変数
+		double nsd_alpha = nsd_alpha_;
+		double ntd_alpha = ntd_alpha_;
+
+
+		double pi = (ntd_alpha_ * ntw_beta_ * ns_wbeta_ * nsd_alpha) / (nsd_alpha_ * nsw_beta_ * nt_wbeta_ * ntd_alpha);
+
+		// tをaccept or reject
+		if (m_rand.GetRandF()<pi)
+		{
+			s = t;
+		}
+	}
+
+	// update
+	if ( s!=oldTopic )
+	{
+		if (!fixed)
+		{
+			// カウントから減らす
+			m_N_mwz[m][w][oldTopic]--;
+			m_N_mz[m][oldTopic]--;
+
+			// 新たなトピックを追加
+			m_N_mwz[m][w][s]++;
+			m_N_mz[m][s]++;
+		}
+
+		m_N_dz[d][oldTopic]--;
+		m_N_z[oldTopic]--;
+
+		m_N_dz[d][s]++;
+		m_N_z[s]++;
+	}
+
+	return s;
 }
 
 void CGibbsMLDA::BuildAliasTables()
@@ -575,6 +623,7 @@ double CGibbsMLDA::UpdateMH(bool fixed)
 	// Zに初期値をセット
 	RandomZ(fixed);
 
+
 	for (int it = 0; it<m_numIteration; it++)
 	{
 		BuildAliasTables();
@@ -590,13 +639,12 @@ double CGibbsMLDA::UpdateMH(bool fixed)
 					int *z_l = m_documents_dm[d][m].z_l;
 					for (int l = 0; l<L; l++)	// 文書内の単語数
 					{
-						int z = Sampling(d, m, l, fixed);
+						int z = SamplingMH(d, m, l, fixed);
 						z_l[l] = z;				// 新たなトピックを割り当て
 					}
 				}
 			}
 		}
-
 	}
 
 	// パラメタ計算
@@ -616,10 +664,18 @@ double CGibbsMLDA::UpdateMH(bool fixed)
 	return m_lik;
 }
 
-double CGibbsMLDA::Learn()
+double CGibbsMLDA::Learn(SampMethod sm)
 {
 	InitN();
-	return Update();
+
+	if (sm==SampMethod::Gibbs)
+	{
+		return Update();
+	}
+	else
+	{
+		return UpdateMH();
+	}
 }
 
 double CGibbsMLDA::Recog( const char *modelDir )

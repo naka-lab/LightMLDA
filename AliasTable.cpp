@@ -8,6 +8,7 @@ CAliasTable::CAliasTable()
 {
 	m_pprobs = NULL;
 	m_palias = NULL;
+	m_len = 0;
 
 	m_rand.Init();
 }
@@ -21,7 +22,7 @@ CAliasTable::~CAliasTable()
 
 int CAliasTable::sample()
 {
-	double rnd = m_rand.GetRandF() * m_len;
+	double rnd = m_rand.GetRandF() * (m_len-0.00001);
 	int idx = int(rnd);
 	double p = rnd - idx;
 

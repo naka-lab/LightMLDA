@@ -1,6 +1,6 @@
 {
     "num_modal": 3,
-    "num_samiter": 100,
+    "num_samiter": 1000,
     "num_cat": 10,
     "data0": "VisionHistogram.txt",
     "data1": "AudioHistogram_new.txt",
@@ -8,14 +8,15 @@
     "dim0": 500,
     "dim1": 50,
     "dim2": 15,
-    "weight0": 280,
-    "weight1": 340,
-    "weight2": 160,
+    "weight0": 200,
+    "weight1": 200,
+    "weight2": 200,
     "category": "Category.txt",
 
     "#######": "以下学習で利用",
     "save_dir": "model",
     "num_trial": 100,
+    "samp_method":  "gibbs",
 
     "#######": "以下認識で利用",
     "load_dir": "model",

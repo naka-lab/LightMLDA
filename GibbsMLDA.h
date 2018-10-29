@@ -3,6 +3,9 @@
 #include "Rand.h"
 #include "AliasTable.h"
 
+enum SampMethod {
+	Gibbs, MH
+};
 
 class CGibbsMLDA
 {
@@ -26,7 +29,7 @@ public:
 
 	void SetNumSamplingIteration(int num){ m_numIteration = num; }
 	void SetData( double **data[] );
-	double Learn();
+	double Learn( SampMethod sm=SampMethod::Gibbs );
 	double Recog( const char *modelDir );
 	void SaveModel( const char *dir );
 	std::vector<int> GetClassificationResult();
