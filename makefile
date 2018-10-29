@@ -1,7 +1,7 @@
 CFLAGS= -O4 -Wall
 LIBS= -lstdc++ -lm
 CC=gcc
-OBJS=GibbsMLDATest.o GibbsMLDA.o
+OBJS=GibbsMLDATest.o GibbsMLDA.o AliasTable.o
 
 mlda: $(OBJS)
 	$(CC) $(OBJS) $(CFLAG) $(LIBS) -o mlda 
