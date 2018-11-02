@@ -1,15 +1,4 @@
-/*********************************************************************
-
-MyIO.h     Copyright 2009.12.02 by naka_t
-
-
-  last modified by naka_t 2009.12.02
-
-  ＊入出力関数						naka_t 2008.04.30
-  ＊ファイルからの入出力を追加		naka_t 2009.12.02
-  ＊std::string版のfgetsを追加		naka_t 2009.12.02
-*********************************************************************/
-#pragma once
+﻿#pragma once
 #include <time.h>
 #include <stdio.h>
 #include <string>
@@ -57,7 +46,6 @@ static int fprintfVar( const char *&val , FILE *fp ){ return fprintf( fp , "%s" 
 // 戻り値：読み込んだ文字数
 //		   ファイルの終端の際は、string::nposを返します
 static size_t fgets( std::string &buff , FILE *fp ){
-
 	char c;
 	buff.clear();
 	while ( ( c = fgetc( fp ) ) != EOF && c != '\n' )
@@ -67,3 +55,5 @@ static size_t fgets( std::string &buff , FILE *fp ){
 
 	return buff.size();
 }
+
+

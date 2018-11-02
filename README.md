@@ -7,7 +7,7 @@ LightLDA[1]をマルチモーダル学習[2]へ拡張したモデルです．Wal
 
 
 ## インストール
-Windowsでは`msvc/mlda.sln`をVisual Studio 2015 (Release, x86)でコンパイルできることを確認しています．
+Windowsでは`msvc/mlda.sln`をVisual Studio 2017でコンパイルできることを確認しています．
 Mac, Ubuntuではmakeでコンパイルで確認しています．
 
 ```
